@@ -1,0 +1,6 @@
+# JetBrains
+cmake-build-*
+.idea
+
+# macOS
+.DS_Store
