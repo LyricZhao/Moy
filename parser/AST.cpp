@@ -207,7 +207,6 @@ void ASTDumper::dump(FunctionAST *node) {
 
 /// Print a module, actually loop over the functions and print them in sequence.
 void ASTDumper::dump(ModuleAST *node) {
-    INDENT();
     llvm::errs() << "Module:\n";
     for (auto &f : *node)
         dump(&f);

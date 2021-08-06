@@ -10,9 +10,9 @@ using namespace moy;
 namespace cl = llvm::cl;
 
 static cl::opt<std::string> inputFilename(cl::Positional,
-                                          cl::desc("<input toy file>"),
-                                          cl::init("-"),
-                                          cl::value_desc("filename"));
+                                          cl::desc("<input moy file>"),
+                                          cl::value_desc("filename"),
+                                          cl::Required);
 
 namespace {
 enum Action { None, DumpAST };
