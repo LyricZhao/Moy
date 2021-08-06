@@ -19,10 +19,10 @@ namespace moy {
 /// or symbol resolution is performed. For example, variables are referenced by
 /// string and the code could reference an undeclared variable and the parsing
 /// succeeds.
-class Parser {
+class AST {
 public:
     /// Create a Parser for the supplied lexer.
-    Parser(Lexer &lexer): lexer(lexer) {}
+    AST(Lexer &lexer): lexer(lexer) {}
 
     /// Parse a full Module. A module is a list of function definitions.
     std::unique_ptr<ModuleAST> parseModule() {

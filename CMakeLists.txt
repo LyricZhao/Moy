@@ -28,5 +28,5 @@ include_directories(${PROJECT_BINARY_DIR}/include)
 link_directories(${LLVM_BUILD_LIBRARY_DIR})
 add_definitions(${LLVM_DEFINITIONS})
 
-add_llvm_executable(moyc moyc.cpp)
+add_llvm_executable(moyc moyc.cpp parser/AST.cpp)
 target_link_libraries(moyc PRIVATE MLIRSupport)

@@ -31,7 +31,7 @@ std::unique_ptr<moy::ModuleAST> parseInputFile(llvm::StringRef filename) {
     }
     auto buffer = fileOrErr.get()->getBuffer();
     LexerBuffer lexer(buffer.begin(), buffer.end(), std::string(filename));
-    Parser parser(lexer);
+    AST parser(lexer);
     return parser.parseModule();
 }
 
