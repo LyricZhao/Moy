@@ -14,7 +14,7 @@ struct Location {
     int col;                           ///< column number.
 };
 
-// List of Token returned by the lexer.
+/// List of Token returned by the lexer.
 enum Token: int {
   tok_semicolon = ';',
   tok_parenthese_open = '(',
