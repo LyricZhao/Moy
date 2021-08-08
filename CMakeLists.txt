@@ -28,5 +28,7 @@ include_directories(${PROJECT_BINARY_DIR}/include)
 link_directories(${LLVM_BUILD_LIBRARY_DIR})
 add_definitions(${LLVM_DEFINITIONS})
 
-add_llvm_executable(moyc moyc.cpp parser/AST.cpp)
+add_subdirectory(include)
+
+add_llvm_executable(moyc moyc.cpp parser/AST.cpp mlir/Dialect.cpp mlir/MLIRGen.cpp DEPENDS OpsIncGen)
 target_link_libraries(moyc PRIVATE MLIRSupport)

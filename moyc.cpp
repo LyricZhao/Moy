@@ -1,3 +1,5 @@
+#include "moy/Dialect.h"
+#include "moy/MLIRGen.h"
 #include "moy/Parser.h"
 
 #include "llvm/ADT/StringRef.h"
@@ -39,7 +41,7 @@ int main(int argc, char **argv) {
     cl::ParseCommandLineOptions(argc, argv, "Moy compiler\n");
 
     auto moduleAST = parseInputFile(inputFilename);
-    if (not moduleAST)
+    if (!moduleAST)
         return 1;
 
     switch (emitAction) {
