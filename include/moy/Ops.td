@@ -10,17 +10,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef TOY_OPS
-#define TOY_OPS
+#ifndef MOY_OPS
+#define MOY_OPS
 
-include "mlir/IR/OpBase.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
 
 // Provide a definition of the 'moy' dialect in the ODS framework so that we
 // can define our operations.
 def Moy_Dialect : Dialect {
   let name = "moy";
-  let cppNamespace = "mlir::moy";
+  let cppNamespace = "::mlir::moy";
 }
 
 // Base class for moy dialect operations. This operation inherits from the base
@@ -80,7 +79,7 @@ def ConstantOp : Moy_Op<"constant", [NoSideEffect]> {
   let verifier = [{ return ::verify(*this); }];
 }
 
-def AddOp : Moy_Op<"add"> {
+def AddOp : Moy_Op<"add", [NoSideEffect]> {
   let summary = "element-wise addition operation";
   let description = [{
     The "add" operation performs element-wise addition between two tensors.
@@ -135,7 +134,7 @@ def GenericCallOp : Moy_Op<"generic_call"> {
   ];
 }
 
-def MulOp : Moy_Op<"mul"> {
+def MulOp : Moy_Op<"mul", [NoSideEffect]> {
   let summary = "element-wise multiplication operation";
   let description = [{
     The "mul" operation performs element-wise multiplication between two
@@ -168,7 +167,7 @@ def PrintOp : Moy_Op<"print"> {
   let assemblyFormat = "$input attr-dict `:` type($input)";
 }
 
-def ReshapeOp : Moy_Op<"reshape"> {
+def ReshapeOp : Moy_Op<"reshape", [NoSideEffect]> {
   let summary = "tensor reshape operation";
   let description = [{
     Reshape operation is transforming its input tensor into a new tensor with
@@ -187,6 +186,9 @@ def ReshapeOp : Moy_Op<"reshape"> {
   let assemblyFormat = [{
     `(` $input `:` type($input) `)` attr-dict `to` type(results)
   }];
+
+  // Enable registering canonicalization patterns with this operation.
+  let hasCanonicalizer = 1;
 }
 
 def ReturnOp : Moy_Op<"return", [NoSideEffect, HasParent<"FuncOp">,
@@ -227,7 +229,7 @@ def ReturnOp : Moy_Op<"return", [NoSideEffect, HasParent<"FuncOp">,
   let verifier = [{ return ::verify(*this); }];
 }
 
-def TransposeOp : Moy_Op<"transpose"> {
+def TransposeOp : Moy_Op<"transpose", [NoSideEffect]> {
   let summary = "transpose operation";
 
   let arguments = (ins F64Tensor:$input);
@@ -236,6 +238,9 @@ def TransposeOp : Moy_Op<"transpose"> {
   let assemblyFormat = [{
     `(` $input `:` type($input) `)` attr-dict `to` type(results)
   }];
+
+  // Enable registering canonicalization patterns with this operation.
+  let hasCanonicalizer = 1;
 
   // Allow building a TransposeOp with from the input operand.
   let builders = [
@@ -246,4 +251,4 @@ def TransposeOp : Moy_Op<"transpose"> {
   let verifier = [{ return ::verify(*this); }];
 }
 
-#endif // TOY_OPS
+#endif // MOY_OPS

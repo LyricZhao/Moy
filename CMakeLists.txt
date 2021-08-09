@@ -30,5 +30,8 @@ add_definitions(${LLVM_DEFINITIONS})
 
 add_subdirectory(include)
 
-add_llvm_executable(moyc moyc.cpp parser/AST.cpp mlir/Dialect.cpp mlir/MLIRGen.cpp DEPENDS OpsIncGen)
-target_link_libraries(moyc PRIVATE MLIRSupport MLIRIR MLIRParser MLIRPass MLIRSPIRV MLIRTranslation MLIRSupport)
+add_llvm_executable(moyc
+        moyc.cpp parser/AST.cpp mlir/Dialect.cpp mlir/MLIRGen.cpp mlir/MoyCombine.cpp
+        DEPENDS OpsIncGen CombineIncGen)
+target_link_libraries(moyc
+        PRIVATE MLIRAnalysis MLIRIR MLIRParser MLIRPass MLIRSideEffectInterfaces MLIRTransforms)

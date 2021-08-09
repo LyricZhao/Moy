@@ -7,6 +7,9 @@
 #include "mlir/IR/MLIRContext.h"
 #include "mlir/IR/Verifier.h"
 #include "mlir/Parser.h"
+#include "mlir/Pass/Pass.h"
+#include "mlir/Pass/PassManager.h"
+#include "mlir/Transforms/Passes.h"
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/CommandLine.h"
@@ -43,6 +46,8 @@ static cl::opt<enum Action> emitAction("emit",
         cl::values(clEnumValN(DumpAST, "ast", "output the AST dump")),
         cl::values(clEnumValN(DumpMLIR, "mlir", "output the MLIR dump")));
 
+static cl::opt<bool> enableOpt("opt", cl::desc("Enable optimizations"));
+
 std::unique_ptr<moy::ModuleAST> parseInputFile(llvm::StringRef filename) {
     llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> fileOrErr =
         llvm::MemoryBuffer::getFileOrSTDIN(filename);
@@ -52,26 +57,19 @@ std::unique_ptr<moy::ModuleAST> parseInputFile(llvm::StringRef filename) {
     }
     auto buffer = fileOrErr.get()->getBuffer();
     LexerBuffer lexer(buffer.begin(), buffer.end(), std::string(filename));
-    AST parser(lexer);
+    Parser parser(lexer);
     return parser.parseModule();
 }
 
-int dumpMLIR() {
-    mlir::MLIRContext context;
-    // Load out dialect in this MLIR context.
-    context.getOrLoadDialect<mlir::moy::MoyDialect>();
-
+int loadMLIR(llvm::SourceMgr &sourceMgr, mlir::MLIRContext &context,
+             mlir::OwningModuleRef &module) {
     // Handle '.moy' input to the compiler
     if (inputType != InputType::MLIR && !llvm::StringRef(inputFilename).endswith(".mlir")) {
         auto moduleAST = parseInputFile(inputFilename);
         if (!moduleAST)
             return 6;
-        mlir::OwningModuleRef module = mlirGen(context, *moduleAST);
-        if (!module)
-            return 1;
-
-        module->dump();
-        return 0;
+        module = mlirGen(context, *moduleAST);
+        return !module ? 1 : 0;
     }
 
     // Otherwise, the input is '.mlir'
@@ -83,12 +81,35 @@ int dumpMLIR() {
     }
 
     // Parse the input MLIR file.
-    llvm::SourceMgr sourceMgr;
     sourceMgr.AddNewSourceBuffer(std::move(*fileOrErr), llvm::SMLoc());
-    mlir::OwningModuleRef module = mlir::parseSourceFile(sourceMgr, &context);
+    module = mlir::parseSourceFile(sourceMgr, &context);
     if (!module) {
         llvm::errs() << "Error can't load file " << inputFilename << "\n";
         return 3;
+    }
+    return 0;
+}
+
+int dumpMLIR() {
+    mlir::MLIRContext context;
+    // Load out dialect in this MLIR context.
+    context.getOrLoadDialect<mlir::moy::MoyDialect>();
+
+    mlir::OwningModuleRef module;
+    llvm::SourceMgr sourceMgr;
+    mlir::SourceMgrDiagnosticHandler sourceMgrDiagnosticHandler(sourceMgr, &context);
+    if (int error = loadMLIR(sourceMgr, context, module))
+        return error;
+
+    if (enableOpt) {
+        mlir::PassManager pm(&context);
+        // Apply any generic pass manager command line options and run the pipeline.
+        mlir::applyPassManagerCLOptions(pm);
+
+        // Add a run of the canonicalizer to optimize the mlir module.
+        pm.addNestedPass<mlir::FuncOp>(mlir::createCanonicalizerPass());
+        if (mlir::failed(pm.run(*module)))
+            return 4;
     }
 
     module->dump();
@@ -113,6 +134,8 @@ int main(int argc, char **argv) {
     // Register any command line options.
     mlir::registerAsmPrinterCLOptions();
     mlir::registerMLIRContextCLOptions();
+    mlir::registerPassManagerCLOptions();
+
     cl::ParseCommandLineOptions(argc, argv, "Moy compiler\n");
 
     switch (emitAction) {
