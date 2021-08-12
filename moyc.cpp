@@ -1,6 +1,7 @@
 #include "moy/Dialect.h"
 #include "moy/MLIRGen.h"
 #include "moy/Parser.h"
+#include "moy/Passes.h"
 
 #include "mlir/IR/AsmState.h"
 #include "mlir/IR/BuiltinOps.h"
@@ -106,8 +107,13 @@ int dumpMLIR() {
         // Apply any generic pass manager command line options and run the pipeline.
         mlir::applyPassManagerCLOptions(pm);
 
-        // Add a run of the canonicalizer to optimize the mlir module.
-        pm.addNestedPass<mlir::FuncOp>(mlir::createCanonicalizerPass());
+        // Now that there is only one function, we can infer the shapes of each of
+        // the operations.
+        mlir::OpPassManager &optPM = pm.nest<mlir::FuncOp>();
+        optPM.addPass(mlir::moy::createShapeInferencePass());
+        optPM.addPass(mlir::createCanonicalizerPass());
+        optPM.addPass(mlir::createCSEPass());
+
         if (mlir::failed(pm.run(*module)))
             return 4;
     }

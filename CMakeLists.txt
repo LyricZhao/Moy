@@ -31,7 +31,12 @@ add_definitions(${LLVM_DEFINITIONS})
 add_subdirectory(include)
 
 add_llvm_executable(moyc
-        moyc.cpp parser/AST.cpp mlir/Dialect.cpp mlir/MLIRGen.cpp mlir/MoyCombine.cpp
-        DEPENDS OpsIncGen CombineIncGen)
+        moyc.cpp
+        parser/AST.cpp
+        mlir/Dialect.cpp mlir/MLIRGen.cpp mlir/MoyCombine.cpp mlir/ShapeInferencePass.cpp
+        DEPENDS OpsIncGen CombineIncGen ShapeInferenceInterfaceIncGen)
 target_link_libraries(moyc
-        PRIVATE MLIRAnalysis MLIRIR MLIRParser MLIRPass MLIRSideEffectInterfaces MLIRTransforms)
+        PRIVATE
+        MLIRAnalysis MLIRIR MLIRParser MLIRPass
+        MLIRCastInterfaces MLIRCallInterfaces
+        MLIRSideEffectInterfaces MLIRTransforms)

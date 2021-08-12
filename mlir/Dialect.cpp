@@ -3,6 +3,7 @@
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinTypes.h"
 #include "mlir/IR/OpImplementation.h"
+#include "mlir/Transforms/InliningUtils.h"
 
 using namespace mlir;
 using namespace mlir::moy;
@@ -135,6 +136,33 @@ void AddOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
     state.addOperands({lhs, rhs});
 }
 
+/// Infer the output shape of the AddOp, this is required by the shape inference
+/// interface.
+void AddOp::inferShapes() {
+    getResult().setType(getOperand(0).getType());
+}
+
+/// Infer the output shape of the CastOp, this is required by the shape
+/// inference interface.
+void CastOp::inferShapes() {
+    getResult().setType(getOperand().getType());
+}
+
+/// Returns true if the given set of input and result types are compatible with
+/// this cast operation. This is required by the `CastOpInterface` to verify
+/// this operation and provide other additional utilities.
+bool CastOp::areCastCompatible(::mlir::TypeRange inputs, ::mlir::TypeRange outputs) {
+    if (inputs.size() != 1 || outputs.size() != 1)
+        return false;
+    // The inputs must be tensors with the same element type.
+    TensorType input = inputs.front().dyn_cast<TensorType>();
+    TensorType output = outputs.front().dyn_cast<TensorType>();
+    if (!input || !output || input.getElementType() != output.getElementType())
+        return false;
+    // The shape is required to match if both types are ranked.
+    return !input.hasRank() || !output.hasRank() || input == output;
+}
+
 void GenericCallOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
                           StringRef callee, ArrayRef<mlir::Value> arguments) {
     // Generic call always returns an unranked Tensor initially.
@@ -143,10 +171,28 @@ void GenericCallOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
     state.addAttribute("callee", builder.getSymbolRefAttr(callee));
 }
 
+/// Return the callee of the generic call operation, this is required by the
+/// call interface.
+CallInterfaceCallable GenericCallOp::getCallableForCallee() {
+    return (*this)->getAttrOfType<SymbolRefAttr>("callee");
+}
+
+/// Get the argument operands to the called function, this is required by the
+/// call interface.
+Operation::operand_range GenericCallOp::getArgOperands() {
+    return inputs();
+}
+
 void MulOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
                   mlir::Value lhs, mlir::Value rhs) {
     state.addTypes(UnrankedTensorType::get(builder.getF64Type()));
     state.addOperands({lhs, rhs});
+}
+
+/// Infer the output shape of the MulOp, this is required by the shape inference
+/// interface.
+void MulOp::inferShapes() {
+    getResult().setType(getOperand(0).getType());
 }
 
 static mlir::LogicalResult verify(ReturnOp op) {
@@ -187,6 +233,12 @@ void TransposeOp::build(mlir::OpBuilder &builder, mlir::OperationState &state,
                         mlir::Value value) {
     state.addTypes(UnrankedTensorType::get(builder.getF64Type()));
     state.addOperands(value);
+}
+
+void TransposeOp::inferShapes() {
+    auto arrayTy = getOperand().getType().cast<RankedTensorType>();
+    SmallVector<int64_t, 2> dims(llvm::reverse(arrayTy.getShape()));
+    getResult().setType(RankedTensorType::get(dims, arrayTy.getElementType()));
 }
 
 static mlir::LogicalResult verify(TransposeOp op) {
