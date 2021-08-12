@@ -107,6 +107,9 @@ int dumpMLIR() {
         // Apply any generic pass manager command line options and run the pipeline.
         mlir::applyPassManagerCLOptions(pm);
 
+        // Inline all functions into main and then delete them.
+        pm.addPass(mlir::createInlinerPass());
+
         // Now that there is only one function, we can infer the shapes of each of
         // the operations.
         mlir::OpPassManager &optPM = pm.nest<mlir::FuncOp>();
