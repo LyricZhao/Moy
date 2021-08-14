@@ -33,7 +33,9 @@ add_subdirectory(include)
 add_llvm_executable(moyc
         moyc.cpp
         parser/AST.cpp
-        mlir/Dialect.cpp mlir/MLIRGen.cpp mlir/MoyCombine.cpp mlir/ShapeInferencePass.cpp
+        mlir/Dialect.cpp mlir/MLIRGen.cpp
+        mlir/MoyCombine.cpp mlir/ShapeInferencePass.cpp
+        mlir/LowerToAffineLoops.cpp
         DEPENDS OpsIncGen CombineIncGen ShapeInferenceInterfaceIncGen)
 target_link_libraries(moyc
         PRIVATE
