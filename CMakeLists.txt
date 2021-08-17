@@ -35,13 +35,27 @@ add_llvm_executable(moyc
         parser/AST.cpp
         mlir/Dialect.cpp mlir/MLIRGen.cpp
         mlir/MoyCombine.cpp mlir/ShapeInferencePass.cpp
-        mlir/LowerToAffineLoops.cpp
+        mlir/LowerToAffineLoops.cpp mlir/LowerToLLVM.cpp
         DEPENDS OpsIncGen CombineIncGen ShapeInferenceInterfaceIncGen)
 get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS)
+get_property(conversion_libs GLOBAL PROPERTY MLIR_CONVERSION_LIBS)
 target_link_libraries(moyc
         PRIVATE
         ${dialect_libs}
+        ${conversion_libs}
         MLIRAnalysis
-        MLIRCastInterfaces MLIRCallInterfaces
-        MLIRIR MLIRParser MLIRPass
-        MLIRSupport MLIRSideEffectInterfaces MLIRTransforms)
+        MLIRCallInterfaces
+        MLIRCastInterfaces
+        MLIRExecutionEngine
+        MLIRIR
+        MLIRLLVMCommonConversion
+        MLIRLLVMIR
+        MLIRLLVMToLLVMIRTranslation
+        MLIRMemRef
+        MLIRParser
+        MLIRPass
+        MLIRSideEffectInterfaces
+        MLIRSupport
+        MLIRTargetLLVMIRExport
+        MLIRTransforms
+)

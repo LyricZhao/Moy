@@ -12,6 +12,10 @@ std::unique_ptr<Pass> createShapeInferencePass();
 /// for a subset of the Moy IR (e.g. matmul).
 std::unique_ptr<mlir::Pass> createLowerToAffinePass();
 
+/// Create a pass for lowering operations the remaining `Toy` operations, as
+/// well as `Affine` and `Std`, to the LLVM dialect for codegen.
+std::unique_ptr<mlir::Pass> createLowerToLLVMPass();
+
 } // namespace moy
 
 } // namespace mlir
