@@ -37,8 +37,11 @@ add_llvm_executable(moyc
         mlir/MoyCombine.cpp mlir/ShapeInferencePass.cpp
         mlir/LowerToAffineLoops.cpp
         DEPENDS OpsIncGen CombineIncGen ShapeInferenceInterfaceIncGen)
+get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS)
 target_link_libraries(moyc
         PRIVATE
-        MLIRAnalysis MLIRIR MLIRParser MLIRPass
+        ${dialect_libs}
+        MLIRAnalysis
         MLIRCastInterfaces MLIRCallInterfaces
-        MLIRSideEffectInterfaces MLIRTransforms)
+        MLIRIR MLIRParser MLIRPass
+        MLIRSupport MLIRSideEffectInterfaces MLIRTransforms)
